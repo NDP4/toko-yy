@@ -6,6 +6,7 @@ use App\Http\Controllers\Customer\DashboardController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController; // Add this import
 use App\Models\Product;  // Add this import
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
@@ -64,6 +65,26 @@ Route::prefix('admin')->group(function () {
 Route::get('/api/products/{id}/variants', function ($id) {
     $product = Product::with('variants')->findOrFail($id);
     return response()->json($product->variants);
+});
+
+// Checkout routes
+Route::middleware(['auth', 'cart.check'])->group(function () {  // Changed middleware name
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::get('/checkout/cities/{province}', [CheckoutController::class, 'getCities']);
+    Route::post('/checkout/shipping-cost', [CheckoutController::class, 'getShippingCost']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::get('/checkout/cities/{province}', [CheckoutController::class, 'getCities']);
+    Route::get('/checkout/districts/{city}', [CheckoutController::class, 'getDistricts']);
+    Route::get('/checkout/villages/{district}', [CheckoutController::class, 'getVillages']);
+    Route::post('/checkout/shipping-cost', [CheckoutController::class, 'getShippingCost']);
+    Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
 });
 
 Route::get('/test-log', function () {

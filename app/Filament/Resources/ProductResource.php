@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use Filament\Forms\Components\TextInput;
 
 class ProductResource extends Resource
 {
@@ -60,6 +61,13 @@ class ProductResource extends Resource
                             Forms\Components\Toggle::make('is_active')
                                 ->required()
                                 ->id('product-is-active'),
+                            TextInput::make('weight')
+                                ->numeric()
+                                ->required()
+                                ->default(1000)
+                                ->suffix('gram')
+                                ->helperText('Berat produk dalam gram (1000 gram = 1 kg)')
+                                ->rules(['required', 'numeric', 'min:1']),
                         ])->columns(2),
 
                     Forms\Components\Tabs\Tab::make('Images')
@@ -131,6 +139,9 @@ class ProductResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('weight')
+                    ->label('Berat')
+                    ->formatStateUsing(fn ($state) => number_format($state / 1000, 1) . ' kg'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('category')

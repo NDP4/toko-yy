@@ -42,6 +42,10 @@ class ProductController extends Controller
         $categories = Category::all();
         $selectedCategory = $request->category ? Category::find($request->category) : null;
 
+        if ($request->ajax()) {
+            return view('products._product_grid', compact('products'))->render();
+        }
+
         return view('products.index', compact('products', 'categories', 'selectedCategory'));
     }
 

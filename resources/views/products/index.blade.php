@@ -269,19 +269,19 @@
                 <div class="p-4 bg-white rounded-lg shadow">
                     <h3 class="mb-4 text-lg font-semibold">Filter</h3>
 
-                    <form action="{{ route('products.index') }}" method="GET">
+                    <form id="filter-form" class="mb-4" onsubmit="return false;">
                         <!-- Search -->
                         <div class="mb-4">
                             <label class="block mb-2 text-sm font-medium">Cari Produk</label>
                             <input type="text" name="search" value="{{ request('search') }}"
                                 class="w-full px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary"
-                                placeholder="Nama produk...">
+                                placeholder="Nama produk..." onkeyup="debounce(loadProducts, 500)()">
                         </div>
 
                         <!-- Categories -->
                         <div class="mb-4">
                             <label class="block mb-2 text-sm font-medium">Kategori</label>
-                            <select name="category" class="w-full px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary">
+                            <select name="category" class="w-full px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary" onchange="loadProducts()">
                                 <option value="">Semua Kategori</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
@@ -294,17 +294,13 @@
                         <!-- Sort -->
                         <div class="mb-4">
                             <label class="block mb-2 text-sm font-medium">Urutkan</label>
-                            <select name="sort" class="w-full px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary">
+                            <select name="sort" class="w-full px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary" onchange="loadProducts()">
                                 <option value="">Pilih Urutan</option>
-                                <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Harga: Rendah ke Tinggi</option>
-                                <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Harga: Tinggi ke Rendah</option>
-                                <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Terbaru</option>
+                                <option value="price_asc">Harga: Rendah ke Tinggi</option>
+                                <option value="price_desc">Harga: Tinggi ke Rendah</option>
+                                <option value="newest">Terbaru</option>
                             </select>
                         </div>
-
-                        <button type="submit" class="w-full btn-primary">
-                            Terapkan Filter
-                        </button>
                     </form>
                 </div>
             </div>
@@ -354,10 +350,77 @@
                     @endforelse
                 </div>
 
+                <div id="loading-indicator" class="hidden">
+                    <div class="flex items-center justify-center w-full p-8">
+                        <div class="w-8 h-8 border-4 border-gray-300 rounded-full animate-spin border-t-primary"></div>
+                    </div>
+                </div>
+
                 <div class="mt-8">
                     {{ $products->links() }}
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function loadProducts(page = 1) {
+            const form = document.getElementById('filter-form');
+            const productsGrid = document.querySelector('.grid.grid-cols-3');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            // Show loading indicator
+            loadingIndicator.classList.remove('hidden');
+            productsGrid.classList.add('opacity-50');
+
+            // Build query string from form data
+            const formData = new FormData(form);
+            formData.append('page', page);
+            const queryString = new URLSearchParams(formData).toString();
+
+            // Update URL without reloading
+            window.history.pushState({}, '', `${window.location.pathname}?${queryString}`);
+
+            // Fetch products
+            fetch(`/products?${queryString}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                productsGrid.innerHTML = html;
+                initPagination();
+            })
+            .finally(() => {
+                loadingIndicator.classList.add('hidden');
+                productsGrid.classList.remove('opacity-50');
+            });
+        }
+
+        function initPagination() {
+            document.querySelectorAll('.pagination a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = new URL(e.target.href).searchParams.get('page');
+                    loadProducts(page);
+                });
+            });
+        }
+
+        // Initialize pagination when page loads
+        document.addEventListener('DOMContentLoaded', initPagination);
+    </script>
 </x-app-layout>

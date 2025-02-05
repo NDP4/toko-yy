@@ -12,9 +12,19 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $cart = $this->getCart();
+        $cart = Cart::getCart()->load(['items.product', 'items.variant']);
+
+        // Save redirect URL for login/register
+        if ($request->has('redirect')) {
+            session()->put('redirect_after_login', $request->redirect);
+        }
+
+        if ($request->ajax()) {
+            return view('cart._cart_content', compact('cart'))->render();
+        }
+
         return view('cart.index', compact('cart'));
     }
 
@@ -36,7 +46,7 @@ class CartController extends Controller
             ], 422);
         }
 
-        $cart = $this->getCart();
+        $cart = Cart::getCart();
 
         $price = $request->variant_id
             ? ProductVariant::findOrFail($request->variant_id)->price
@@ -72,21 +82,46 @@ class CartController extends Controller
 
     public function update(Request $request, CartItem $item)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1'
-        ]);
+        try {
+            $validated = $request->validate([
+                'quantity' => 'required|integer|min:1'
+            ]);
 
-        $item->update([
-            'quantity' => $request->quantity
-        ]);
+            $item->update($validated);
+            $cart = Cart::getCart()->load(['items.product', 'items.variant']);
 
-        return back()->with('success', 'Cart updated successfully');
+            return response()->json([
+                'success' => true,
+                'cart_count' => $cart->items->sum('quantity'),
+                'cartHtml' => view('partials.cart-dropdown', ['cart' => $cart])->render()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'cart_count' => 0,
+                'cartHtml' => view('partials.cart-dropdown', ['cart' => null])->render()
+            ], 200); // Change to 200 to prevent error
+        }
     }
 
     public function remove(CartItem $item)
     {
-        $item->delete();
-        return back()->with('success', 'Item removed from cart');
+        try {
+            $item->delete();
+            $cart = Cart::getCart()->load(['items.product', 'items.variant']);
+
+            return response()->json([
+                'success' => true,
+                'cart_count' => $cart->items->sum('quantity'),
+                'cartHtml' => view('partials.cart-dropdown', ['cart' => $cart])->render()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'cart_count' => 0,
+                'cartHtml' => view('partials.cart-dropdown', ['cart' => null])->render()
+            ], 200); // Change to 200 to prevent error
+        }
     }
 
     protected function getCart()

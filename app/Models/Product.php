@@ -21,6 +21,7 @@ class Product extends Model
         'stock',
         'sku',
         'is_active',
+        'weight',
     ];
 
     protected $casts = [
@@ -49,5 +50,14 @@ class Product extends Model
     {
         return $this->images->where('is_primary', true)->first()?->image
             ?? $this->images->first()?->image;
+    }
+
+    // Add accessor for formatted weight
+    public function getFormattedWeightAttribute()
+    {
+        if ($this->weight >= 1000) {
+            return number_format($this->weight / 1000, 1) . ' kg';
+        }
+        return $this->weight . ' g';
     }
 }

@@ -50,19 +50,19 @@
         }
 
         function updateCartCount(count) {
-            const cartCount = document.getElementById('cart-count');
-            const cartWrapper = document.getElementById('cart-count-wrapper');
+            const cartCountWrapper = document.getElementById('cart-count-wrapper');
+            const existingBadge = document.getElementById('cart-count');
+
+            if (existingBadge) {
+                existingBadge.remove();
+            }
 
             if (count > 0) {
-                if (cartCount) {
-                    cartCount.textContent = count;
-                } else {
-                    const newCartCount = document.createElement('span');
-                    newCartCount.id = 'cart-count';
-                    newCartCount.className = 'absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs text-white transform translate-x-1/2 -translate-y-1/2 rounded-full bg-primary';
-                    newCartCount.textContent = count;
-                    cartWrapper.appendChild(newCartCount);
-                }
+                cartCountWrapper.insertAdjacentHTML('beforeend', `
+                    <span id="cart-count" class="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs text-white transform translate-x-1/2 -translate-y-1/2 rounded-full bg-primary">
+                        ${count}
+                    </span>
+                `);
             }
         }
     </script>

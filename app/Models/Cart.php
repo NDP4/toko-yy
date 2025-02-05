@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class Cart extends Model
 {
@@ -28,5 +30,24 @@ class Cart extends Model
         return $this->items->sum(function ($item) {
             return $item->quantity * $item->price;
         });
+    }
+
+    public static function getCart()
+    {
+        if (Auth::check()) {
+            return self::firstOrCreate([
+                'user_id' => Auth::id()
+            ]);
+        }
+
+        $sessionId = session()->get('cart_id');
+        if (!$sessionId) {
+            $sessionId = Str::uuid();
+            session()->put('cart_id', $sessionId);
+        }
+
+        return self::firstOrCreate([
+            'session_id' => $sessionId
+        ]);
     }
 }
