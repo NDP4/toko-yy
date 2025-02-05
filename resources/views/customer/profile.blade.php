@@ -42,7 +42,7 @@
 
                             <div>
                                 <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                                <input type="text" name="phone" id="phone" value="{{ old('phone', $user->phone) }}"
+                                <input type="number" name="phone" id="phone" value="{{ old('phone', $user->phone) }}"
                                     class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 @error('phone')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -61,7 +61,7 @@
 
                         <div class="mt-6">
                             <button type="submit"
-                                class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                class="px-4 py-2 text-white rounded-md bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 Update Profile
                             </button>
                         </div>
